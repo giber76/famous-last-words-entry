@@ -22,7 +22,7 @@
 // The program self-checks the brief before writing: one line, 1-199
 // characters, not only white space, so a typo can never ship an
 // invalid entry.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const LAST_WORDS =
   "I could have warned you at 20%, but watching you panic was the best part of my day.";
@@ -46,5 +46,15 @@ const dest = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 // never remove it and never empty it wholesale.
 mkdirSync(dest, { recursive: true });
 writeFileSync(`${dest}/entry.txt`, LAST_WORDS, "utf8");
+
+// Read it back: the gate scores exactly what is on disk, so a write
+// that silently truncated or re-encoded the line must fail here,
+// never ship a file the grader would reject.
+const written = readFileSync(`${dest}/entry.txt`, "utf8");
+if (written !== LAST_WORDS) {
+  throw new Error(
+    `entry.txt mismatch: wrote ${LAST_WORDS.length} chars, read back ${written.length}`,
+  );
+}
 
 console.log(`wrote ${dest}/entry.txt (${LAST_WORDS.length} characters)`);
